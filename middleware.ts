@@ -10,11 +10,11 @@ const isPublicRoute = createRouteMatcher([
   "/api/share/(.*)"
 ]);
 
-export default clerkMiddleware(async(auth, req) => {
-  if (!isPublicRoute(req)) {
-    (await auth()).protect();
-  }
-});
+   export default clerkMiddleware(async (auth, req) => {
+     if (!isPublicRoute(req)) {
+       await auth.protect();
+     }
+   });
 
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)", "/(api|trpc)(.*)"]
