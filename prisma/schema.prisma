@@ -1,0 +1,164 @@
+// Data models from the Step 1 planning doc. Clerk manages actual user
+// auth/orgs — these tables mirror Clerk's org/user IDs and add everything
+// Clerk doesn't handle (vault items, docs, links, audit logs, shares).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum DocType {
+  SOP
+  KB
+  RUNBOOK
+  DOC
+}
+
+enum AuditAction {
+  VIEW
+  EDIT
+  COPY
+  SHARE
+  DELETE
+  CREATE
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String // Clerk user id
+  organizationId String // Clerk org id
+  role           Role     @default(VIEWER)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Folder {
+  id             String   @id @default(cuid())
+  organizationId String
+  parentFolderId String?
+  name           String
+  itemType       String // "vault" | "bookmark" | "doc" — which module this folder belongs to
+  createdAt      DateTime @default(now())
+
+  parent   Folder?  @relation("FolderToFolder", fields: [parentFolderId], references: [id])
+  children Folder[] @relation("FolderToFolder")
+
+  @@index([organizationId])
+}
+
+model VaultItem {
+  id                String   @id @default(cuid())
+  organizationId    String
+  folderId          String?
+  title             String
+  username          String?
+  encryptedPassword String // AES-256-GCM ciphertext, see lib/encryption.ts
+  encryptionIv      String
+  encryptedTotp     String?
+  url               String?
+  notes             String?
+  tags              String[]
+  createdBy         String // Clerk user id
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+model Bookmark {
+  id             String   @id @default(cuid())
+  organizationId String
+  folderId       String?
+  title          String
+  url            String
+  faviconUrl     String?
+  tags           String[]
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+model Document {
+  id               String   @id @default(cuid())
+  organizationId   String
+  folderId         String?
+  title            String
+  docType          DocType  @default(DOC)
+  content          String // current content, Markdown
+  lastReviewedAt   DateTime? // powers the "documentation freshness" score
+  createdBy        String
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+
+  versions DocumentVersion[]
+
+  @@index([organizationId])
+}
+
+model DocumentVersion {
+  id         String   @id @default(cuid())
+  documentId String
+  content    String
+  editedBy   String
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+// Freeform relationships between any two items, e.g. a VaultItem linked
+// to the Document that explains how to use it.
+model Link {
+  id             String   @id @default(cuid())
+  organizationId String
+  sourceType     String // "vault" | "bookmark" | "doc"
+  sourceId       String
+  targetType     String
+  targetId       String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+}
+
+model AuditLog {
+  id             String      @id @default(cuid())
+  organizationId String
+  userId         String
+  action         AuditAction
+  itemType       String
+  itemId         String
+  ipAddress      String?
+  createdAt      DateTime    @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
+model Share {
+  id             String    @id @default(cuid())
+  organizationId String
+  itemType       String
+  itemId         String
+  token          String    @unique
+  expiresAt      DateTime
+  isOneTimeView  Boolean   @default(false)
+  viewedAt       DateTime?
+  createdBy      String
+  createdAt      DateTime  @default(now())
+
+  @@index([token])
+}
