@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VaultForm, type VaultItemInput } from "@/components/vault/vault-form";
@@ -15,6 +16,16 @@ type VaultItem = {
 };
 
 export default function VaultPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+      <VaultPageInner />
+    </Suspense>
+  );
+}
+
+function VaultPageInner() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const [items, setItems] = useState<VaultItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<
@@ -143,7 +154,12 @@ export default function VaultPage() {
             <p className="text-sm text-muted">Nothing in the vault yet.</p>
           )}
           {items.map((item) => (
-            <Card key={item.id} className="flex items-center justify-between p-4">
+            <Card
+              key={item.id}
+              className={`flex items-center justify-between p-4 ${
+                item.id === highlightId ? "ring-2 ring-accent" : ""
+              }`}
+            >
               <div>
                 <p className="font-bold text-ink">{item.title}</p>
                 <p className="text-sm text-muted">

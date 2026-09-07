@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { LayoutGrid, Rows3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,16 @@ function Favicon({ url }: { url: string | null }) {
 }
 
 export default function BookmarksPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>
+      <BookmarksPageInner />
+    </Suspense>
+  );
+}
+
+function BookmarksPageInner() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const [items, setItems] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"list" | "add" | { edit: Partial<BookmarkInput> & { id: string } }>("list");
@@ -175,7 +186,7 @@ export default function BookmarksPage() {
             )}
             {filtered.map((b) =>
               viewStyle === "grid" ? (
-                <Card key={b.id} className="p-4">
+                <Card key={b.id} className={`p-4 ${b.id === highlightId ? "ring-2 ring-accent" : ""}`}>
                   <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                     <Favicon url={b.faviconUrl} />
                     <span className="truncate font-bold text-ink">{b.title}</span>
@@ -201,7 +212,7 @@ export default function BookmarksPage() {
                   </div>
                 </Card>
               ) : (
-                <Card key={b.id} className="flex items-center justify-between p-3">
+                <Card key={b.id} className={`flex items-center justify-between p-3 ${b.id === highlightId ? "ring-2 ring-accent" : ""}`}>
                   <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-2">
                     <Favicon url={b.faviconUrl} />
                     <span className="truncate font-bold text-ink">{b.title}</span>
