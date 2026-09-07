@@ -13,6 +13,22 @@ type Bookmark = {
   tags: string[];
 };
 
+function Favicon({ url }: { url: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!url || failed) {
+    return <div className="h-4 w-4 shrink-0 rounded-sm bg-border" />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      className="h-4 w-4 shrink-0"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function BookmarksPage() {
   const [items, setItems] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,12 +138,7 @@ export default function BookmarksPage() {
             {filtered.map((b) => (
               <Card key={b.id} className="p-4">
                 <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  {b.faviconUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.faviconUrl} alt="" className="h-4 w-4" />
-                  ) : (
-                    <div className="h-4 w-4 rounded-sm bg-border" />
-                  )}
+                  <Favicon url={b.faviconUrl} />
                   <span className="truncate font-bold text-ink">{b.title}</span>
                 </a>
                 <p className="mt-1 truncate text-xs text-muted">{b.url}</p>
