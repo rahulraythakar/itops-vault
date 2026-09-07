@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { LayoutGrid, Rows3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookmarkForm, type BookmarkInput } from "@/components/bookmarks/bookmark-form";
@@ -35,6 +36,19 @@ export default function BookmarksPage() {
   const [mode, setMode] = useState<"list" | "add" | { edit: Partial<BookmarkInput> & { id: string } }>("list");
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [viewStyle, setViewStyle] = useState<"grid" | "rows">("grid");
+
+  // Remember the user's preferred view across visits. Reused pattern —
+  // Docs and Vault will get the same toggle later using this same approach.
+  useEffect(() => {
+    const saved = localStorage.getItem("bookmarksViewStyle");
+    if (saved === "grid" || saved === "rows") setViewStyle(saved);
+  }, []);
+
+  function updateViewStyle(style: "grid" | "rows") {
+    setViewStyle(style);
+    localStorage.setItem("bookmarksViewStyle", style);
+  }
 
   async function loadItems() {
     setLoading(true);
@@ -123,45 +137,93 @@ export default function BookmarksPage() {
 
       {mode === "list" && (
         <>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Quick search title, URL, or tag…"
-            className="mt-4 w-full max-w-md rounded-md border border-border px-3 py-2 text-sm"
-          />
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Quick search title, URL, or tag…"
+              className="w-full max-w-md rounded-md border border-border px-3 py-2 text-sm"
+            />
+            <div className="flex rounded-md border border-border p-0.5">
+              <button
+                onClick={() => updateViewStyle("grid")}
+                aria-label="Tile view"
+                className={`rounded p-1.5 ${viewStyle === "grid" ? "bg-accent/10 text-accent" : "text-muted"}`}
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                onClick={() => updateViewStyle("rows")}
+                aria-label="List view"
+                className={`rounded p-1.5 ${viewStyle === "rows" ? "bg-accent/10 text-accent" : "text-muted"}`}
+              >
+                <Rows3 size={16} />
+              </button>
+            </div>
+          </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={
+              viewStyle === "grid"
+                ? "mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                : "mt-4 flex flex-col gap-2"
+            }
+          >
             {loading && <p className="text-sm text-muted">Loading…</p>}
             {!loading && filtered.length === 0 && (
               <p className="text-sm text-muted">No bookmarks match.</p>
             )}
-            {filtered.map((b) => (
-              <Card key={b.id} className="p-4">
-                <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  <Favicon url={b.faviconUrl} />
-                  <span className="truncate font-bold text-ink">{b.title}</span>
-                </a>
-                <p className="mt-1 truncate text-xs text-muted">{b.url}</p>
-                {b.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
+            {filtered.map((b) =>
+              viewStyle === "grid" ? (
+                <Card key={b.id} className="p-4">
+                  <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                    <Favicon url={b.faviconUrl} />
+                    <span className="truncate font-bold text-ink">{b.title}</span>
+                  </a>
+                  <p className="mt-1 truncate text-xs text-muted">{b.url}</p>
+                  {b.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {b.tags.map((tag) => (
+                        <span key={tag} className="rounded bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
+                    >
+                      Edit
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
+                  </div>
+                </Card>
+              ) : (
+                <Card key={b.id} className="flex items-center justify-between p-3">
+                  <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-2">
+                    <Favicon url={b.faviconUrl} />
+                    <span className="truncate font-bold text-ink">{b.title}</span>
+                    <span className="truncate text-xs text-muted">{b.url}</span>
                     {b.tags.map((tag) => (
-                      <span key={tag} className="rounded bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
+                      <span key={tag} className="shrink-0 rounded bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
                         {tag}
                       </span>
                     ))}
+                  </a>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
+                    >
+                      Edit
+                    </Button>
+                    <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
                   </div>
-                )}
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
-                  >
-                    Edit
-                  </Button>
-                  <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              )
+            )}
           </div>
         </>
       )}
