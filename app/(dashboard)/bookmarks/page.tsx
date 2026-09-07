@@ -1,10 +1,159 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { BookmarkForm, type BookmarkInput } from "@/components/bookmarks/bookmark-form";
+
+type Bookmark = {
+  id: string;
+  title: string;
+  url: string;
+  faviconUrl: string | null;
+  tags: string[];
+};
+
 export default function BookmarksPage() {
+  const [items, setItems] = useState<Bookmark[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"list" | "add" | { edit: Partial<BookmarkInput> & { id: string } }>("list");
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadItems() {
+    setLoading(true);
+    const res = await fetch("/api/bookmarks");
+    const data = await res.json();
+    if (res.ok) setItems(data.items);
+    else setError(data.error);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  // Quick search — filters what's already loaded, no extra request needed
+  // for a dataset this size.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.url.toLowerCase().includes(q) ||
+        b.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [items, query]);
+
+  async function handleCreate(data: BookmarkInput) {
+    const res = await fetch("/api/bookmarks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!res.ok) return setError(result.error);
+    setMode("list");
+    loadItems();
+  }
+
+  async function handleUpdate(data: BookmarkInput) {
+    const res = await fetch(`/api/bookmarks/${data.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!res.ok) return setError(result.error);
+    setMode("list");
+    loadItems();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this bookmark?")) return;
+    const res = await fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
+    if (res.ok) loadItems();
+    else setError((await res.json()).error);
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-black text-ink capitalize">bookmarks</h1>
-      <p className="mt-1 text-sm text-muted">
-        This module is scaffolded but not built yet — coming in a later step.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-ink">Bookmarks</h1>
+          <p className="mt-1 text-sm text-muted">Shared links, organized by tag.</p>
+        </div>
+        {mode === "list" && <Button onClick={() => setMode("add")}>+ Add bookmark</Button>}
+      </div>
+
+      {error && (
+        <div className="mt-4 rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
+      {mode === "add" && (
+        <div className="mt-4">
+          <BookmarkForm onSubmit={handleCreate} onCancel={() => setMode("list")} />
+        </div>
+      )}
+
+      {typeof mode === "object" && (
+        <div className="mt-4">
+          <BookmarkForm initial={mode.edit} onSubmit={handleUpdate} onCancel={() => setMode("list")} />
+        </div>
+      )}
+
+      {mode === "list" && (
+        <>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Quick search title, URL, or tag…"
+            className="mt-4 w-full max-w-md rounded-md border border-border px-3 py-2 text-sm"
+          />
+
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {loading && <p className="text-sm text-muted">Loading…</p>}
+            {!loading && filtered.length === 0 && (
+              <p className="text-sm text-muted">No bookmarks match.</p>
+            )}
+            {filtered.map((b) => (
+              <Card key={b.id} className="p-4">
+                <a href={b.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  {b.faviconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.faviconUrl} alt="" className="h-4 w-4" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-sm bg-border" />
+                  )}
+                  <span className="truncate font-bold text-ink">{b.title}</span>
+                </a>
+                <p className="mt-1 truncate text-xs text-muted">{b.url}</p>
+                {b.tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {b.tags.map((tag) => (
+                      <span key={tag} className="rounded bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
+                  >
+                    Edit
+                  </Button>
+                  <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
