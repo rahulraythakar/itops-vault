@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VaultForm, type VaultItemInput } from "@/components/vault/vault-form";
+import { ShareButton } from "@/components/share/share-button";
 
 type VaultItem = {
   id: string;
@@ -178,10 +179,11 @@ function VaultPageInner() {
                   </div>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="relative flex gap-2">
                 <Button variant="secondary" onClick={() => handleCopy(item.id)}>
                   {copiedId === item.id ? "Copied! (clears in 20s)" : "Copy password"}
                 </Button>
+                <ShareButton itemType="vault" itemId={item.id} />
                 <Button
                   variant="secondary"
                   onClick={() =>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { isStale } from "@/lib/freshness";
+import { ShareButton } from "@/components/share/share-button";
 
 type DocVersion = { id: string; content: string; editedBy: string; createdAt: string };
 type DocDetail = {
@@ -96,7 +97,7 @@ export default function DocDetailPage() {
 
       <div className="mt-2 flex items-center justify-between">
         <h1 className="text-2xl font-black text-ink">{doc.title}</h1>
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2">
           <span className={`rounded px-2 py-1 text-xs font-bold ${stale ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"}`}>
             {stale ? "Needs review" : "Reviewed recently"}
           </span>
@@ -104,6 +105,7 @@ export default function DocDetailPage() {
           <Button variant="secondary" onClick={() => setShowHistory((s) => !s)}>
             {showHistory ? "Hide" : "Version history"} ({doc.versions.length})
           </Button>
+          <ShareButton itemType="doc" itemId={doc.id} />
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
         </div>
       </div>

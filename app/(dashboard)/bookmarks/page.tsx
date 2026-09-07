@@ -6,6 +6,7 @@ import { LayoutGrid, Rows3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookmarkForm, type BookmarkInput } from "@/components/bookmarks/bookmark-form";
+import { ShareButton } from "@/components/share/share-button";
 
 type Bookmark = {
   id: string;
@@ -201,13 +202,14 @@ function BookmarksPageInner() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex gap-2">
+                  <div className="relative mt-3 flex gap-2">
                     <Button
                       variant="secondary"
                       onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
                     >
                       Edit
                     </Button>
+                    <ShareButton itemType="bookmark" itemId={b.id} />
                     <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
                   </div>
                 </Card>
@@ -223,13 +225,14 @@ function BookmarksPageInner() {
                       </span>
                     ))}
                   </a>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="relative flex shrink-0 gap-2">
                     <Button
                       variant="secondary"
                       onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
                     >
                       Edit
                     </Button>
+                    <ShareButton itemType="bookmark" itemId={b.id} />
                     <Button variant="danger" onClick={() => handleDelete(b.id)}>Delete</Button>
                   </div>
                 </Card>

@@ -9,6 +9,7 @@ import {
   Bookmark,
   FileText,
   Search,
+  Share2,
   Settings
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ const links = [
   { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
   { href: "/docs", label: "Docs & SOPs", icon: FileText },
   { href: "/search", label: "Search", icon: Search },
+  { href: "/shares", label: "Shared Links", icon: Share2 },
   { href: "/settings/org", label: "Organization", icon: Settings }
 ];
 
