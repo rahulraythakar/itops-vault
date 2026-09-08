@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookmarkForm, type BookmarkInput } from "@/components/bookmarks/bookmark-form";
 import { ShareButton } from "@/components/share/share-button";
+import { FolderTree } from "@/components/folders/folder-tree";
 
 type Bookmark = {
   id: string;
@@ -14,6 +15,7 @@ type Bookmark = {
   url: string;
   faviconUrl: string | null;
   tags: string[];
+  folderId: string | null;
 };
 
 function Favicon({ url }: { url: string | null }) {
@@ -47,6 +49,7 @@ function BookmarksPageInner() {
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"list" | "add" | { edit: Partial<BookmarkInput> & { id: string } }>("list");
   const [query, setQuery] = useState("");
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewStyle, setViewStyle] = useState<"grid" | "rows">("grid");
 
@@ -75,18 +78,21 @@ function BookmarksPageInner() {
     loadItems();
   }, []);
 
-  // Quick search — filters what's already loaded, no extra request needed
-  // for a dataset this size.
+  // Folder selection and quick search both narrow the same list — folder
+  // first, then text search on top of whatever the folder already shows.
   const filtered = useMemo(() => {
+    const inFolder = items.filter(
+      (b) => selectedFolderId === null || b.folderId === selectedFolderId
+    );
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
+    if (!q) return inFolder;
+    return inFolder.filter(
       (b) =>
         b.title.toLowerCase().includes(q) ||
         b.url.toLowerCase().includes(q) ||
         b.tags.some((t) => t.toLowerCase().includes(q))
     );
-  }, [items, query]);
+  }, [items, query, selectedFolderId]);
 
   async function handleCreate(data: BookmarkInput) {
     const res = await fetch("/api/bookmarks", {
@@ -177,10 +183,18 @@ function BookmarksPageInner() {
           <div
             className={
               viewStyle === "grid"
-                ? "mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                : "mt-4 flex flex-col gap-2"
+                ? "mt-4 flex gap-6"
+                : "mt-4 flex gap-6"
             }
           >
+            <FolderTree itemType="bookmark" selectedFolderId={selectedFolderId} onSelect={setSelectedFolderId} />
+            <div
+              className={
+                viewStyle === "grid"
+                  ? "grid flex-1 grid-cols-1 gap-2 self-start sm:grid-cols-2 lg:grid-cols-3"
+                  : "flex flex-1 flex-col gap-2 self-start"
+              }
+            >
             {loading && <p className="text-sm text-muted">Loading…</p>}
             {!loading && filtered.length === 0 && (
               <p className="text-sm text-muted">No bookmarks match.</p>
@@ -205,7 +219,7 @@ function BookmarksPageInner() {
                   <div className="relative mt-3 flex gap-2">
                     <Button
                       variant="secondary"
-                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
+                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags, folderId: b.folderId } })}
                     >
                       Edit
                     </Button>
@@ -228,7 +242,7 @@ function BookmarksPageInner() {
                   <div className="relative flex shrink-0 gap-2">
                     <Button
                       variant="secondary"
-                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags } })}
+                      onClick={() => setMode({ edit: { id: b.id, title: b.title, url: b.url, faviconUrl: b.faviconUrl ?? undefined, tags: b.tags, folderId: b.folderId } })}
                     >
                       Edit
                     </Button>
@@ -238,6 +252,7 @@ function BookmarksPageInner() {
                 </Card>
               )
             )}
+            </div>
           </div>
         </>
       )}

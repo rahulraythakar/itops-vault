@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { isStale } from "@/lib/freshness";
 import { ShareButton } from "@/components/share/share-button";
+import { FolderSelect } from "@/components/folders/folder-select";
 
 type DocVersion = { id: string; content: string; editedBy: string; createdAt: string };
 type DocDetail = {
@@ -14,6 +15,7 @@ type DocDetail = {
   docType: string;
   content: string;
   lastReviewedAt: string | null;
+  folderId: string | null;
   versions: DocVersion[];
 };
 
@@ -84,6 +86,16 @@ export default function DocDetailPage() {
     else setError((await res.json()).error);
   }
 
+  async function handleMoveFolder(folderId: string | null) {
+    const res = await fetch(`/api/documents/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderId })
+    });
+    if (res.ok) load();
+    else setError((await res.json()).error);
+  }
+
   if (loading) return <p className="text-sm text-muted">Loading…</p>;
   if (!doc) return <p className="text-sm text-danger">{error || "Document not found."}</p>;
 
@@ -107,6 +119,13 @@ export default function DocDetailPage() {
           </Button>
           <ShareButton itemType="doc" itemId={doc.id} />
           <Button variant="danger" onClick={handleDelete}>Delete</Button>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center gap-2 text-sm text-muted">
+        <span className="font-bold">Folder:</span>
+        <div className="w-56">
+          <FolderSelect itemType="doc" value={doc.folderId} onChange={handleMoveFolder} />
         </div>
       </div>
 

@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         url: body.url,
         faviconUrl: body.faviconUrl || null,
         tags: Array.isArray(body.tags) ? body.tags : [],
+        folderId: body.folderId || null,
         createdBy: userId
       }
     });

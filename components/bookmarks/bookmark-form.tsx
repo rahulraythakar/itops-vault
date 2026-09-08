@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { FolderSelect } from "@/components/folders/folder-select";
 
 export type BookmarkInput = {
   id?: string;
@@ -9,6 +10,7 @@ export type BookmarkInput = {
   url: string;
   faviconUrl?: string;
   tags: string[];
+  folderId?: string | null;
 };
 
 export function BookmarkForm({
@@ -24,6 +26,7 @@ export function BookmarkForm({
   const [title, setTitle] = useState(initial?.title ?? "");
   const [faviconUrl, setFaviconUrl] = useState(initial?.faviconUrl ?? "");
   const [tagsText, setTagsText] = useState((initial?.tags ?? []).join(", "));
+  const [folderId, setFolderId] = useState<string | null>(initial?.folderId ?? null);
   const [fetching, setFetching] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +58,8 @@ export function BookmarkForm({
         title,
         url,
         faviconUrl,
-        tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean)
+        tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
+        folderId
       });
     } finally {
       setSaving(false);
@@ -98,6 +102,11 @@ export function BookmarkForm({
           className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm"
           placeholder="client-a, docs"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-bold text-ink">Folder</label>
+        <FolderSelect itemType="bookmark" value={folderId} onChange={setFolderId} />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

@@ -31,6 +31,7 @@ export async function PATCH(
       url: body.url ?? existing.url,
       notes: body.notes ?? existing.notes,
       tags: Array.isArray(body.tags) ? body.tags : existing.tags,
+      folderId: body.folderId !== undefined ? body.folderId : existing.folderId,
       updatedAt: new Date()
     };
 
@@ -43,7 +44,7 @@ export async function PATCH(
     const item = await prisma.vaultItem.update({
       where: { id: params.id },
       data,
-      select: { id: true, title: true, username: true, url: true, tags: true, updatedAt: true }
+      select: { id: true, title: true, username: true, url: true, tags: true, folderId: true, updatedAt: true }
     });
 
     await logAudit({

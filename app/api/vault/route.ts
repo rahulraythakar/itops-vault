@@ -19,6 +19,7 @@ export async function GET() {
         username: true,
         url: true,
         tags: true,
+        folderId: true,
         updatedAt: true
       },
       orderBy: { updatedAt: "desc" }
@@ -58,10 +59,11 @@ export async function POST(req: Request) {
         url: body.url || null,
         notes: body.notes || null,
         tags: Array.isArray(body.tags) ? body.tags : [],
+        folderId: body.folderId || null,
         createdBy: userId,
         updatedAt: new Date()
       },
-      select: { id: true, title: true, username: true, url: true, tags: true, updatedAt: true }
+      select: { id: true, title: true, username: true, url: true, tags: true, folderId: true, updatedAt: true }
     });
 
     await logAudit({

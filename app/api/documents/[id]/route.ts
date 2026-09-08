@@ -60,6 +60,7 @@ export async function PATCH(
       data: {
         title: body.title ?? existing.title,
         docType: body.docType ?? existing.docType,
+        folderId: body.folderId !== undefined ? body.folderId : existing.folderId,
         content: body.content ?? existing.content,
         updatedAt: new Date(),
         ...(contentChanged && {

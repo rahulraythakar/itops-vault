@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VaultForm, type VaultItemInput } from "@/components/vault/vault-form";
 import { ShareButton } from "@/components/share/share-button";
+import { FolderTree } from "@/components/folders/folder-tree";
 
 type VaultItem = {
   id: string;
@@ -13,6 +14,7 @@ type VaultItem = {
   username: string | null;
   url: string | null;
   tags: string[];
+  folderId: string | null;
   updatedAt: string;
 };
 
@@ -34,6 +36,7 @@ function VaultPageInner() {
   >("list");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
   async function loadItems() {
     setLoading(true);
@@ -149,12 +152,16 @@ function VaultPageInner() {
       )}
 
       {mode === "list" && (
-        <div className="mt-6 space-y-2">
-          {loading && <p className="text-sm text-muted">Loading…</p>}
-          {!loading && items.length === 0 && (
-            <p className="text-sm text-muted">Nothing in the vault yet.</p>
-          )}
-          {items.map((item) => (
+        <div className="mt-6 flex gap-6">
+          <FolderTree itemType="vault" selectedFolderId={selectedFolderId} onSelect={setSelectedFolderId} />
+          <div className="flex-1 space-y-2">
+            {loading && <p className="text-sm text-muted">Loading…</p>}
+            {!loading && items.filter((i) => selectedFolderId === null || i.folderId === selectedFolderId).length === 0 && (
+              <p className="text-sm text-muted">Nothing here yet.</p>
+            )}
+            {items
+              .filter((i) => selectedFolderId === null || i.folderId === selectedFolderId)
+              .map((item) => (
             <Card
               key={item.id}
               className={`flex items-center justify-between p-4 ${

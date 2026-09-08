@@ -24,7 +24,8 @@ export async function PATCH(
         title: body.title ?? existing.title,
         url: body.url ?? existing.url,
         faviconUrl: body.faviconUrl ?? existing.faviconUrl,
-        tags: Array.isArray(body.tags) ? body.tags : existing.tags
+        tags: Array.isArray(body.tags) ? body.tags : existing.tags,
+        folderId: body.folderId !== undefined ? body.folderId : existing.folderId
       }
     });
 

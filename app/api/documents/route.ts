@@ -15,6 +15,7 @@ export async function GET() {
         title: true,
         docType: true,
         lastReviewedAt: true,
+        folderId: true,
         updatedAt: true
       },
       orderBy: { updatedAt: "desc" }
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
         title: body.title,
         docType: body.docType || "DOC",
         content: initialContent,
+        folderId: body.folderId || null,
         createdBy: userId,
         updatedAt: new Date(),
         versions: {

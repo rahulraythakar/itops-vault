@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { generatePassword } from "@/lib/password-generator";
+import { FolderSelect } from "@/components/folders/folder-select";
 
 export type VaultItemInput = {
   id?: string;
@@ -12,6 +13,7 @@ export type VaultItemInput = {
   url?: string;
   notes?: string;
   tags: string[];
+  folderId?: string | null;
 };
 
 export function VaultForm({
@@ -31,6 +33,7 @@ export function VaultForm({
   const [url, setUrl] = useState(initial?.url ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [tagsText, setTagsText] = useState((initial?.tags ?? []).join(", "));
+  const [folderId, setFolderId] = useState<string | null>(initial?.folderId ?? null);
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,7 +50,8 @@ export function VaultForm({
         tags: tagsText
           .split(",")
           .map((t) => t.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        folderId
       });
     } finally {
       setSaving(false);
@@ -138,6 +142,11 @@ export function VaultForm({
           rows={3}
           className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm"
         />
+      </div>
+
+      <div>
+        <label className="text-sm font-bold text-ink">Folder</label>
+        <FolderSelect itemType="vault" value={folderId} onChange={setFolderId} />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
